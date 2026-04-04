@@ -3,55 +3,69 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hand Draw + AI Guess</title>
+  <title>HandTrack 3D Model Studio</title>
   <style>
     :root {
       color-scheme: dark;
-      --bg: #0f172a;
-      --panel: #111827;
-      --accent: #22d3ee;
+      --bg: #030712;
+      --panel: #111827cc;
+      --border: #334155;
       --text: #e5e7eb;
-      --muted: #9ca3af;
-      --success: #34d399;
-      --danger: #f87171;
+      --muted: #94a3b8;
+      --accent: #22d3ee;
+      --ok: #34d399;
+      --warn: #f59e0b;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: linear-gradient(140deg, #020617, var(--bg));
+      background: radial-gradient(circle at top, #0b1224, var(--bg) 60%);
       color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
       min-height: 100vh;
-      padding: 20px;
+      padding: 16px;
       display: grid;
       place-items: center;
     }
 
-    .app {
-      width: min(1050px, 100%);
+    .layout {
+      width: min(1200px, 100%);
       display: grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap: 18px;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 14px;
     }
 
     .card {
-      background: rgba(17, 24, 39, .9);
-      border: 1px solid rgba(148, 163, 184, .25);
+      background: var(--panel);
+      border: 1px solid #33415566;
       border-radius: 14px;
+      backdrop-filter: blur(6px);
       padding: 14px;
-      backdrop-filter: blur(4px);
-      box-shadow: 0 10px 30px rgba(2, 6, 23, .4);
+      box-shadow: 0 16px 40px #02061799;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.15rem, 2.4vw, 1.7rem);
+    }
+
+    .muted {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
     }
 
     .stage {
+      margin-top: 12px;
       position: relative;
       width: 100%;
       aspect-ratio: 4 / 3;
       border-radius: 12px;
       overflow: hidden;
-      border: 1px solid rgba(148, 163, 184, .35);
+      border: 1px solid #475569;
+      background: #020617;
     }
 
     video, #overlay {
@@ -63,227 +77,294 @@
       transform: scaleX(-1);
     }
 
-    #overlay {
-      pointer-events: none;
-    }
+    #overlay { pointer-events: none; }
 
-    #drawing {
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      border-radius: 12px;
-      border: 1px solid rgba(148, 163, 184, .35);
-      background: #fff;
+    .controls {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
     }
 
     .row {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      margin-top: 12px;
+      align-items: center;
     }
 
     button {
+      border-radius: 10px;
+      border: 1px solid #475569;
       background: #1f2937;
       color: var(--text);
-      border: 1px solid #374151;
-      padding: 10px 14px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: .2s ease;
       font-weight: 600;
+      padding: 9px 13px;
+      cursor: pointer;
     }
 
-    button:hover { transform: translateY(-1px); }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-
-    .primary {
-      border-color: #0e7490;
-      background: rgba(6, 182, 212, .2);
+    button.primary {
+      background: #083344;
+      border-color: #0891b2;
       color: #a5f3fc;
     }
 
-    h1 {
-      font-size: clamp(1.2rem, 2vw, 1.7rem);
-      margin: 0 0 8px;
-    }
-
-    .muted { color: var(--muted); margin: 0 0 12px; }
-    .status { font-weight: 700; }
-
     .pill {
-      display: inline-block;
-      margin: 6px 8px 0 0;
-      padding: 7px 10px;
-      border-radius: 999px;
-      background: #1f2937;
-      border: 1px solid #374151;
       font-size: .9rem;
+      border-radius: 999px;
+      border: 1px solid #475569;
+      padding: 6px 10px;
+      color: var(--muted);
+      background: #0f172a;
     }
 
-    .on { color: var(--success); border-color: rgba(52, 211, 153, .5); }
-    .off { color: var(--danger); border-color: rgba(248, 113, 113, .5); }
-
-    .guess {
-      font-size: clamp(1.2rem, 2.6vw, 2rem);
-      margin: 8px 0;
-      font-weight: 800;
-      letter-spacing: .2px;
+    .pill.on {
+      color: var(--ok);
+      border-color: #34d39999;
     }
 
-    .hint {
+    label {
+      display: grid;
+      gap: 4px;
       font-size: .9rem;
       color: var(--muted);
+      min-width: 170px;
     }
 
-    @media (max-width: 920px) {
-      .app { grid-template-columns: 1fr; }
+    input[type="range"] { width: 100%; }
+
+    #viewer3d {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 12px;
+      border: 1px solid #475569;
+      display: block;
+      background: #020617;
+    }
+
+    .help {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <main class="app">
+  <main class="layout">
     <section class="card">
-      <h1>🖐️ Hand Movement Drawing Tracker</h1>
-      <p class="muted">Pinch your <strong>index finger + thumb</strong> to draw in the white box. Release to stop. Then press “Guess drawing”.</p>
+      <h1>🖐️ Smooth Hand Tracking</h1>
+      <p class="muted">Pinch <strong>thumb + index</strong> to draw a 3D stroke. Release to stop. We smooth landmarks to reduce jitter and keep tracking accurate.</p>
 
       <div class="stage">
         <video id="video" autoplay playsinline muted></video>
         <canvas id="overlay"></canvas>
       </div>
 
-      <div class="row">
-        <button id="startBtn" class="primary">Start Camera + Tracking</button>
-        <button id="clearBtn">Clear Drawing</button>
-      </div>
+      <div class="controls">
+        <div class="row">
+          <button id="startBtn" class="primary">Start Tracking</button>
+          <button id="clearBtn">Clear Model</button>
+          <span id="trackPill" class="pill">Tracking: Off</span>
+          <span id="drawPill" class="pill">Drawing: Off</span>
+        </div>
 
-      <div>
-        <span id="trackingState" class="pill off">Tracking: Off</span>
-        <span id="drawingState" class="pill off">Drawing: Off</span>
+        <div class="row">
+          <label>
+            Smoothing: <span id="smoothValue">0.62</span>
+            <input id="smoothSlider" type="range" min="0.1" max="0.9" step="0.01" value="0.62" />
+          </label>
+          <label>
+            Tube Radius: <span id="radiusValue">0.020</span>
+            <input id="radiusSlider" type="range" min="0.008" max="0.04" step="0.001" value="0.02" />
+          </label>
+        </div>
       </div>
     </section>
 
     <section class="card">
-      <h1>🎨 AI Guess</h1>
-      <canvas id="drawing" width="320" height="320"></canvas>
-      <div class="row">
-        <button id="guessBtn" class="primary" disabled>Guess drawing</button>
-      </div>
-      <p class="guess" id="guessText">Model loading...</p>
-      <p class="status" id="confidenceText"></p>
-      <p class="hint">Tip: draw simple objects like cat, house, tree, smiley, sun, fish.</p>
+      <h1>🧊 Live 3D Model Output</h1>
+      <canvas id="viewer3d"></canvas>
+      <p id="status" class="help">Ready. Click “Start Tracking” and allow camera access.</p>
+      <p class="help">Tip: move slowly for detailed geometry. Orbit camera with drag, zoom with wheel.</p>
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-  <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
 
   <script>
     const video = document.getElementById('video');
     const overlay = document.getElementById('overlay');
     const overlayCtx = overlay.getContext('2d');
 
-    const drawingCanvas = document.getElementById('drawing');
-    const drawCtx = drawingCanvas.getContext('2d');
-
     const startBtn = document.getElementById('startBtn');
     const clearBtn = document.getElementById('clearBtn');
-    const guessBtn = document.getElementById('guessBtn');
+    const trackPill = document.getElementById('trackPill');
+    const drawPill = document.getElementById('drawPill');
+    const statusEl = document.getElementById('status');
 
-    const trackingState = document.getElementById('trackingState');
-    const drawingState = document.getElementById('drawingState');
+    const smoothSlider = document.getElementById('smoothSlider');
+    const smoothValue = document.getElementById('smoothValue');
+    const radiusSlider = document.getElementById('radiusSlider');
+    const radiusValue = document.getElementById('radiusValue');
 
-    const guessText = document.getElementById('guessText');
-    const confidenceText = document.getElementById('confidenceText');
+    const viewer = document.getElementById('viewer3d');
 
-    let model;
     let isTracking = false;
     let isDrawing = false;
-    let lastPoint = null;
+    let smoothedPoint = null;
+    let currentStroke = [];
+    let smoothingAlpha = Number(smoothSlider.value);
+    let tubeRadius = Number(radiusSlider.value);
 
-    function initDrawingSurface() {
-      drawCtx.fillStyle = '#ffffff';
-      drawCtx.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-      drawCtx.lineWidth = 12;
-      drawCtx.lineCap = 'round';
-      drawCtx.strokeStyle = '#000000';
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x020617);
+
+    const camera3d = new THREE.PerspectiveCamera(45, 1, 0.01, 100);
+    camera3d.position.set(0.9, 0.7, 1.2);
+
+    const renderer = new THREE.WebGLRenderer({ canvas: viewer, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const controls = new THREE.OrbitControls(camera3d, viewer);
+    controls.enableDamping = true;
+
+    const hemi = new THREE.HemisphereLight(0x67e8f9, 0x020617, 1.3);
+    scene.add(hemi);
+
+    const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+    dir.position.set(1.5, 2, 1.2);
+    scene.add(dir);
+
+    const grid = new THREE.GridHelper(2, 16, 0x334155, 0x1e293b);
+    grid.position.y = -0.45;
+    scene.add(grid);
+
+    const strokesGroup = new THREE.Group();
+    scene.add(strokesGroup);
+
+    function resize3D() {
+      const rect = viewer.getBoundingClientRect();
+      renderer.setSize(rect.width, rect.height, false);
+      camera3d.aspect = rect.width / rect.height;
+      camera3d.updateProjectionMatrix();
     }
 
-    function setPill(el, on, label) {
-      el.classList.toggle('on', on);
-      el.classList.toggle('off', !on);
-      el.textContent = `${label}: ${on ? 'On' : 'Off'}`;
+    function setPill(element, isOn, label) {
+      element.textContent = `${label}: ${isOn ? 'On' : 'Off'}`;
+      element.classList.toggle('on', isOn);
     }
 
-    function drawLine(from, to) {
-      drawCtx.beginPath();
-      drawCtx.moveTo(from.x, from.y);
-      drawCtx.lineTo(to.x, to.y);
-      drawCtx.stroke();
-    }
+    function smoothPoint(raw) {
+      if (!smoothedPoint) {
+        smoothedPoint = { ...raw };
+        return smoothedPoint;
+      }
 
-    function mapToDrawingCanvas(x, y, sourceWidth, sourceHeight) {
-      const mirroredX = 1 - x;
-      return {
-        x: mirroredX * drawingCanvas.width,
-        y: y * drawingCanvas.height,
+      smoothedPoint = {
+        x: smoothedPoint.x * smoothingAlpha + raw.x * (1 - smoothingAlpha),
+        y: smoothedPoint.y * smoothingAlpha + raw.y * (1 - smoothingAlpha),
+        z: smoothedPoint.z * smoothingAlpha + raw.z * (1 - smoothingAlpha),
       };
+
+      return smoothedPoint;
     }
 
-    async function loadModel() {
-      guessText.textContent = 'Loading DoodleNet model...';
-      model = await ml5.imageClassifier('DoodleNet');
-      guessText.textContent = 'Model ready. Draw and click "Guess drawing".';
-      guessBtn.disabled = false;
+    function toWorldPoint(landmark) {
+      const x = (0.5 - landmark.x) * 1.2;
+      const y = (0.5 - landmark.y) * 1.2;
+      const z = -landmark.z * 0.75;
+      return new THREE.Vector3(x, y, z);
     }
 
-    function clearDrawing() {
-      initDrawingSurface();
-      guessText.textContent = 'Drawing cleared. Draw again!';
-      confidenceText.textContent = '';
+    function appendStrokePoint(point) {
+      if (currentStroke.length > 0) {
+        const prev = currentStroke[currentStroke.length - 1];
+        if (prev.distanceTo(point) < 0.004) {
+          return;
+        }
+      }
+
+      currentStroke.push(point);
+
+      if (currentStroke.length < 8) return;
+
+      const preview = strokesGroup.getObjectByName('preview');
+      if (preview) {
+        preview.geometry.dispose();
+        preview.material.dispose();
+        strokesGroup.remove(preview);
+      }
+
+      const curve = new THREE.CatmullRomCurve3(currentStroke, false, 'centripetal');
+      const geometry = new THREE.TubeGeometry(curve, Math.min(220, currentStroke.length * 3), tubeRadius, 14, false);
+      const material = new THREE.MeshStandardMaterial({ color: 0x22d3ee, roughness: 0.25, metalness: 0.08 });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = 'preview';
+      strokesGroup.add(mesh);
     }
 
-    function handleHandResults(results) {
+    function finalizeStroke() {
+      const preview = strokesGroup.getObjectByName('preview');
+      if (!preview) {
+        currentStroke = [];
+        return;
+      }
+
+      preview.name = `stroke-${Date.now()}`;
+      currentStroke = [];
+    }
+
+    function clearModel() {
+      while (strokesGroup.children.length) {
+        const child = strokesGroup.children.pop();
+        child.geometry.dispose();
+        child.material.dispose();
+      }
+      currentStroke = [];
+      statusEl.textContent = '3D model cleared.';
+    }
+
+    function handleResults(results) {
       overlay.width = video.videoWidth || 640;
       overlay.height = video.videoHeight || 480;
 
-      overlayCtx.save();
       overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
 
-      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+      if (results.multiHandLandmarks?.length) {
         const landmarks = results.multiHandLandmarks[0];
+
         drawConnectors(overlayCtx, landmarks, HAND_CONNECTIONS, { color: '#22d3ee', lineWidth: 3 });
-        drawLandmarks(overlayCtx, landmarks, { color: '#f8fafc', lineWidth: 1, radius: 3 });
+        drawLandmarks(overlayCtx, landmarks, { color: '#e2e8f0', lineWidth: 1, radius: 2.4 });
 
         const indexTip = landmarks[8];
         const thumbTip = landmarks[4];
-
         const pinchDistance = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y, indexTip.z - thumbTip.z);
-        const pinchThreshold = 0.06;
-        const pinch = pinchDistance < pinchThreshold;
+        const pinch = pinchDistance < 0.055;
 
-        const point = mapToDrawingCanvas(indexTip.x, indexTip.y, overlay.width, overlay.height);
+        const stable = smoothPoint(indexTip);
 
         if (pinch) {
-          if (!isDrawing) {
-            isDrawing = true;
-            lastPoint = point;
-          } else if (lastPoint) {
-            drawLine(lastPoint, point);
-            lastPoint = point;
-          }
-        } else {
+          isDrawing = true;
+          appendStrokePoint(toWorldPoint(stable));
+          statusEl.textContent = 'Drawing 3D tube...';
+        } else if (isDrawing) {
           isDrawing = false;
-          lastPoint = null;
+          finalizeStroke();
+          statusEl.textContent = 'Stroke finalized. Pinch again to add another piece.';
         }
-      } else {
+      } else if (isDrawing) {
         isDrawing = false;
-        lastPoint = null;
+        finalizeStroke();
       }
 
-      setPill(drawingState, isDrawing, 'Drawing');
-      overlayCtx.restore();
+      setPill(drawPill, isDrawing, 'Drawing');
     }
 
     async function startTracking() {
@@ -296,13 +377,13 @@
       hands.setOptions({
         maxNumHands: 1,
         modelComplexity: 1,
-        minDetectionConfidence: 0.65,
-        minTrackingConfidence: 0.65,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.72,
       });
 
-      hands.onResults(handleHandResults);
+      hands.onResults(handleResults);
 
-      const camera = new Camera(video, {
+      const cameraFeed = new Camera(video, {
         onFrame: async () => {
           await hands.send({ image: video });
         },
@@ -310,42 +391,41 @@
         height: 720,
       });
 
-      await camera.start();
-      isTracking = true;
-      setPill(trackingState, true, 'Tracking');
-      startBtn.disabled = true;
-      startBtn.textContent = 'Tracking Started';
-    }
-
-    async function guessDrawing() {
-      if (!model) {
-        guessText.textContent = 'Model still loading...';
-        return;
+      try {
+        await cameraFeed.start();
+        isTracking = true;
+        setPill(trackPill, true, 'Tracking');
+        startBtn.textContent = 'Tracking Active';
+        startBtn.disabled = true;
+        statusEl.textContent = 'Tracking is active. Pinch to sculpt 3D strokes.';
+      } catch (error) {
+        statusEl.textContent = 'Camera permission failed. Please allow webcam access.';
       }
-
-      guessText.textContent = 'Thinking...';
-      confidenceText.textContent = '';
-
-      model.classify(drawingCanvas, (err, results) => {
-        if (err) {
-          guessText.textContent = 'Could not classify drawing.';
-          confidenceText.textContent = 'Try drawing again.';
-          return;
-        }
-
-        const best = results[0];
-        const confidence = (best.confidence * 100).toFixed(1);
-        guessText.textContent = `I think it is: ${best.label}`;
-        confidenceText.textContent = `Confidence: ${confidence}%`;
-      });
     }
+
+    function animate() {
+      controls.update();
+      renderer.render(scene, camera3d);
+      requestAnimationFrame(animate);
+    }
+
+    smoothSlider.addEventListener('input', () => {
+      smoothingAlpha = Number(smoothSlider.value);
+      smoothValue.textContent = smoothingAlpha.toFixed(2);
+    });
+
+    radiusSlider.addEventListener('input', () => {
+      tubeRadius = Number(radiusSlider.value);
+      radiusValue.textContent = tubeRadius.toFixed(3);
+    });
 
     startBtn.addEventListener('click', startTracking);
-    clearBtn.addEventListener('click', clearDrawing);
-    guessBtn.addEventListener('click', guessDrawing);
+    clearBtn.addEventListener('click', clearModel);
 
-    initDrawingSurface();
-    loadModel();
+    window.addEventListener('resize', resize3D);
+
+    resize3D();
+    animate();
   </script>
 </body>
 </html>
