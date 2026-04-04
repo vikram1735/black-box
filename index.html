@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HandTrack 3D Model Studio</title>
+  <title>Hand Motion ➜ Sign Language Text</title>
   <style>
     :root {
       color-scheme: dark;
       --bg: #030712;
-      --panel: #111827cc;
+      --panel: #0f172acc;
       --border: #334155;
-      --text: #e5e7eb;
+      --text: #e2e8f0;
       --muted: #94a3b8;
       --accent: #22d3ee;
       --ok: #34d399;
@@ -21,34 +21,34 @@
 
     body {
       margin: 0;
+      min-height: 100vh;
       background: radial-gradient(circle at top, #0b1224, var(--bg) 60%);
       color: var(--text);
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      min-height: 100vh;
       padding: 16px;
       display: grid;
       place-items: center;
     }
 
     .layout {
-      width: min(1200px, 100%);
+      width: min(1100px, 100%);
       display: grid;
-      grid-template-columns: 1fr 1.2fr;
+      grid-template-columns: 1.2fr 1fr;
       gap: 14px;
     }
 
     .card {
       background: var(--panel);
-      border: 1px solid #33415566;
+      border: 1px solid #33415588;
       border-radius: 14px;
-      backdrop-filter: blur(6px);
       padding: 14px;
-      box-shadow: 0 16px 40px #02061799;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 18px 35px #02061766;
     }
 
     h1 {
       margin: 0 0 8px;
-      font-size: clamp(1.15rem, 2.4vw, 1.7rem);
+      font-size: clamp(1.2rem, 2.5vw, 1.7rem);
     }
 
     .muted {
@@ -68,7 +68,7 @@
       background: #020617;
     }
 
-    video, #overlay {
+    video, canvas {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -79,16 +79,11 @@
 
     #overlay { pointer-events: none; }
 
-    .controls {
-      display: grid;
+    .controls, .row {
+      display: flex;
+      flex-wrap: wrap;
       gap: 10px;
       margin-top: 12px;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
       align-items: center;
     }
 
@@ -97,8 +92,8 @@
       border: 1px solid #475569;
       background: #1f2937;
       color: var(--text);
-      font-weight: 600;
       padding: 9px 13px;
+      font-weight: 600;
       cursor: pointer;
     }
 
@@ -109,12 +104,12 @@
     }
 
     .pill {
-      font-size: .9rem;
       border-radius: 999px;
       border: 1px solid #475569;
       padding: 6px 10px;
       color: var(--muted);
       background: #0f172a;
+      font-size: 0.9rem;
     }
 
     .pill.on {
@@ -122,32 +117,59 @@
       border-color: #34d39999;
     }
 
-    label {
-      display: grid;
-      gap: 4px;
-      font-size: .9rem;
-      color: var(--muted);
-      min-width: 170px;
-    }
-
-    input[type="range"] { width: 100%; }
-
-    #viewer3d {
-      width: 100%;
-      aspect-ratio: 1 / 1;
+    .big {
+      margin-top: 12px;
+      border: 1px solid #1e3a8a;
+      background: #0b1124;
       border-radius: 12px;
-      border: 1px solid #475569;
-      display: block;
-      background: #020617;
+      padding: 16px;
+      text-align: center;
     }
 
-    .help {
+    .big h2 {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .sign {
+      margin-top: 8px;
+      font-size: clamp(2rem, 5vw, 3.3rem);
+      font-weight: 800;
+      color: var(--accent);
+      min-height: 1.3em;
+    }
+
+    #output {
+      margin-top: 12px;
+      width: 100%;
+      min-height: 140px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      background: #020617;
+      color: var(--text);
+      padding: 12px;
+      font-size: 1rem;
+      line-height: 1.45;
+      resize: vertical;
+    }
+
+    .legend {
       margin-top: 10px;
       color: var(--muted);
-      font-size: .9rem;
+      font-size: 0.9rem;
+      line-height: 1.45;
     }
 
-    @media (max-width: 980px) {
+    code {
+      background: #111827;
+      border: 1px solid #374151;
+      padding: 1px 6px;
+      border-radius: 7px;
+    }
+
+    @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
     }
   </style>
@@ -155,8 +177,8 @@
 <body>
   <main class="layout">
     <section class="card">
-      <h1>🖐️ Smooth Hand Tracking</h1>
-      <p class="muted">Pinch <strong>thumb + index</strong> to draw a 3D stroke. Release to stop. We smooth landmarks to reduce jitter and keep tracking accurate.</p>
+      <h1>🤟 Hand Motion to Sign Language Text</h1>
+      <p class="muted">Show a supported hand sign to the camera. Hold it steady for ~1 second and it gets added to the transcript for communication support.</p>
 
       <div class="stage">
         <video id="video" autoplay playsinline muted></video>
@@ -164,207 +186,148 @@
       </div>
 
       <div class="controls">
-        <div class="row">
-          <button id="startBtn" class="primary">Start Tracking</button>
-          <button id="clearBtn">Clear Model</button>
-          <span id="trackPill" class="pill">Tracking: Off</span>
-          <span id="drawPill" class="pill">Drawing: Off</span>
-        </div>
-
-        <div class="row">
-          <label>
-            Smoothing: <span id="smoothValue">0.62</span>
-            <input id="smoothSlider" type="range" min="0.1" max="0.9" step="0.01" value="0.62" />
-          </label>
-          <label>
-            Tube Radius: <span id="radiusValue">0.020</span>
-            <input id="radiusSlider" type="range" min="0.008" max="0.04" step="0.001" value="0.02" />
-          </label>
-        </div>
+        <button id="startBtn" class="primary">Start Camera</button>
+        <button id="clearBtn">Clear Text</button>
+        <button id="speakBtn">Speak Text</button>
+        <span id="trackPill" class="pill">Tracking: Off</span>
       </div>
+
+      <p id="status" class="legend">Ready. Click <code>Start Camera</code> and allow webcam access.</p>
     </section>
 
     <section class="card">
-      <h1>🧊 Live 3D Model Output</h1>
-      <canvas id="viewer3d"></canvas>
-      <p id="status" class="help">Ready. Click “Start Tracking” and allow camera access.</p>
-      <p class="help">Tip: move slowly for detailed geometry. Orbit camera with drag, zoom with wheel.</p>
+      <h1>📝 Live Conversion</h1>
+      <div class="big">
+        <h2>Current Detected Sign</h2>
+        <div id="currentSign" class="sign">—</div>
+      </div>
+      <textarea id="output" placeholder="Detected signs appear here..."></textarea>
+
+      <p class="legend"><strong>Supported signs:</strong> <code>A</code> fist+thumb, <code>B</code> open hand, <code>L</code> index+thumb, <code>Y</code> thumb+pinky, <code>ILY</code> index+thumb+pinky.</p>
+      <p class="legend"><strong>Tip:</strong> Keep only one hand in frame, good lighting, and a plain background for better accuracy.</p>
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-  <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
 
   <script>
     const video = document.getElementById('video');
     const overlay = document.getElementById('overlay');
-    const overlayCtx = overlay.getContext('2d');
+    const ctx = overlay.getContext('2d');
 
     const startBtn = document.getElementById('startBtn');
     const clearBtn = document.getElementById('clearBtn');
+    const speakBtn = document.getElementById('speakBtn');
     const trackPill = document.getElementById('trackPill');
-    const drawPill = document.getElementById('drawPill');
     const statusEl = document.getElementById('status');
-
-    const smoothSlider = document.getElementById('smoothSlider');
-    const smoothValue = document.getElementById('smoothValue');
-    const radiusSlider = document.getElementById('radiusSlider');
-    const radiusValue = document.getElementById('radiusValue');
-
-    const viewer = document.getElementById('viewer3d');
+    const currentSignEl = document.getElementById('currentSign');
+    const outputEl = document.getElementById('output');
 
     let isTracking = false;
-    let isDrawing = false;
-    let smoothedPoint = null;
-    let currentStroke = [];
-    let smoothingAlpha = Number(smoothSlider.value);
-    let tubeRadius = Number(radiusSlider.value);
+    let signVotes = [];
+    let stableSign = '';
+    let lastCommittedSign = '';
+    let lastCommitAt = 0;
 
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x020617);
+    const HOLD_MS = 1000;
+    const COOLDOWN_MS = 900;
 
-    const camera3d = new THREE.PerspectiveCamera(45, 1, 0.01, 100);
-    camera3d.position.set(0.9, 0.7, 1.2);
-
-    const renderer = new THREE.WebGLRenderer({ canvas: viewer, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    const controls = new THREE.OrbitControls(camera3d, viewer);
-    controls.enableDamping = true;
-
-    const hemi = new THREE.HemisphereLight(0x67e8f9, 0x020617, 1.3);
-    scene.add(hemi);
-
-    const dir = new THREE.DirectionalLight(0xffffff, 1.2);
-    dir.position.set(1.5, 2, 1.2);
-    scene.add(dir);
-
-    const grid = new THREE.GridHelper(2, 16, 0x334155, 0x1e293b);
-    grid.position.y = -0.45;
-    scene.add(grid);
-
-    const strokesGroup = new THREE.Group();
-    scene.add(strokesGroup);
-
-    function resize3D() {
-      const rect = viewer.getBoundingClientRect();
-      renderer.setSize(rect.width, rect.height, false);
-      camera3d.aspect = rect.width / rect.height;
-      camera3d.updateProjectionMatrix();
+    function setTrackingPill(isOn) {
+      trackPill.textContent = `Tracking: ${isOn ? 'On' : 'Off'}`;
+      trackPill.classList.toggle('on', isOn);
     }
 
-    function setPill(element, isOn, label) {
-      element.textContent = `${label}: ${isOn ? 'On' : 'Off'}`;
-      element.classList.toggle('on', isOn);
+    function appendText(text) {
+      const needsSpace = outputEl.value.length > 0 && !outputEl.value.endsWith(' ');
+      outputEl.value += `${needsSpace ? ' ' : ''}${text}`;
     }
 
-    function smoothPoint(raw) {
-      if (!smoothedPoint) {
-        smoothedPoint = { ...raw };
-        return smoothedPoint;
-      }
-
-      smoothedPoint = {
-        x: smoothedPoint.x * smoothingAlpha + raw.x * (1 - smoothingAlpha),
-        y: smoothedPoint.y * smoothingAlpha + raw.y * (1 - smoothingAlpha),
-        z: smoothedPoint.z * smoothingAlpha + raw.z * (1 - smoothingAlpha),
-      };
-
-      return smoothedPoint;
+    function fingerExtended(landmarks, tip, pip) {
+      return landmarks[tip].y < landmarks[pip].y;
     }
 
-    function toWorldPoint(landmark) {
-      const x = (0.5 - landmark.x) * 1.2;
-      const y = (0.5 - landmark.y) * 1.2;
-      const z = -landmark.z * 0.75;
-      return new THREE.Vector3(x, y, z);
+    function thumbExtended(landmarks) {
+      return Math.abs(landmarks[4].x - landmarks[3].x) > 0.035;
     }
 
-    function appendStrokePoint(point) {
-      if (currentStroke.length > 0) {
-        const prev = currentStroke[currentStroke.length - 1];
-        if (prev.distanceTo(point) < 0.004) {
-          return;
+    function classifySign(landmarks) {
+      const indexUp = fingerExtended(landmarks, 8, 6);
+      const middleUp = fingerExtended(landmarks, 12, 10);
+      const ringUp = fingerExtended(landmarks, 16, 14);
+      const pinkyUp = fingerExtended(landmarks, 20, 18);
+      const thumbUp = thumbExtended(landmarks);
+
+      const totalUp = [indexUp, middleUp, ringUp, pinkyUp].filter(Boolean).length;
+
+      if (!indexUp && !middleUp && !ringUp && !pinkyUp && thumbUp) return 'A';
+      if (indexUp && middleUp && ringUp && pinkyUp && !thumbUp) return 'B';
+      if (indexUp && !middleUp && !ringUp && !pinkyUp && thumbUp) return 'L';
+      if (!indexUp && !middleUp && !ringUp && pinkyUp && thumbUp) return 'Y';
+      if (indexUp && !middleUp && !ringUp && pinkyUp && thumbUp) return 'ILY';
+      if (totalUp === 0 && !thumbUp) return '✊';
+      return '';
+    }
+
+    function getMajorityVote(votes) {
+      const counts = new Map();
+      votes.forEach((v) => counts.set(v, (counts.get(v) || 0) + 1));
+      let best = '';
+      let max = 0;
+      for (const [name, count] of counts.entries()) {
+        if (count > max) {
+          best = name;
+          max = count;
         }
       }
-
-      currentStroke.push(point);
-
-      if (currentStroke.length < 8) return;
-
-      const preview = strokesGroup.getObjectByName('preview');
-      if (preview) {
-        preview.geometry.dispose();
-        preview.material.dispose();
-        strokesGroup.remove(preview);
-      }
-
-      const curve = new THREE.CatmullRomCurve3(currentStroke, false, 'centripetal');
-      const geometry = new THREE.TubeGeometry(curve, Math.min(220, currentStroke.length * 3), tubeRadius, 14, false);
-      const material = new THREE.MeshStandardMaterial({ color: 0x22d3ee, roughness: 0.25, metalness: 0.08 });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.name = 'preview';
-      strokesGroup.add(mesh);
+      return best;
     }
 
-    function finalizeStroke() {
-      const preview = strokesGroup.getObjectByName('preview');
-      if (!preview) {
-        currentStroke = [];
+    function maybeCommitSign(sign) {
+      const now = performance.now();
+      if (!sign) return;
+
+      if (stableSign !== sign) {
+        stableSign = sign;
+        lastCommitAt = now;
         return;
       }
 
-      preview.name = `stroke-${Date.now()}`;
-      currentStroke = [];
-    }
+      const heldLongEnough = now - lastCommitAt >= HOLD_MS;
+      const inCooldown = now - lastCommitAt < HOLD_MS + COOLDOWN_MS;
 
-    function clearModel() {
-      while (strokesGroup.children.length) {
-        const child = strokesGroup.children.pop();
-        child.geometry.dispose();
-        child.material.dispose();
+      if (heldLongEnough && (!inCooldown || lastCommittedSign !== sign)) {
+        appendText(sign === '✊' ? '[PAUSE]' : sign);
+        lastCommittedSign = sign;
+        lastCommitAt = now;
       }
-      currentStroke = [];
-      statusEl.textContent = '3D model cleared.';
     }
 
     function handleResults(results) {
       overlay.width = video.videoWidth || 640;
       overlay.height = video.videoHeight || 480;
+      ctx.clearRect(0, 0, overlay.width, overlay.height);
 
-      overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
-
-      if (results.multiHandLandmarks?.length) {
-        const landmarks = results.multiHandLandmarks[0];
-
-        drawConnectors(overlayCtx, landmarks, HAND_CONNECTIONS, { color: '#22d3ee', lineWidth: 3 });
-        drawLandmarks(overlayCtx, landmarks, { color: '#e2e8f0', lineWidth: 1, radius: 2.4 });
-
-        const indexTip = landmarks[8];
-        const thumbTip = landmarks[4];
-        const pinchDistance = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y, indexTip.z - thumbTip.z);
-        const pinch = pinchDistance < 0.055;
-
-        const stable = smoothPoint(indexTip);
-
-        if (pinch) {
-          isDrawing = true;
-          appendStrokePoint(toWorldPoint(stable));
-          statusEl.textContent = 'Drawing 3D tube...';
-        } else if (isDrawing) {
-          isDrawing = false;
-          finalizeStroke();
-          statusEl.textContent = 'Stroke finalized. Pinch again to add another piece.';
-        }
-      } else if (isDrawing) {
-        isDrawing = false;
-        finalizeStroke();
+      if (!results.multiHandLandmarks?.length) {
+        signVotes = [];
+        currentSignEl.textContent = '—';
+        return;
       }
 
-      setPill(drawPill, isDrawing, 'Drawing');
+      const landmarks = results.multiHandLandmarks[0];
+      drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: '#22d3ee', lineWidth: 3 });
+      drawLandmarks(ctx, landmarks, { color: '#e2e8f0', lineWidth: 1, radius: 2.2 });
+
+      const sign = classifySign(landmarks);
+      if (sign) {
+        signVotes.push(sign);
+        if (signVotes.length > 8) signVotes.shift();
+      }
+
+      const voted = getMajorityVote(signVotes);
+      currentSignEl.textContent = voted || '…';
+      maybeCommitSign(voted);
     }
 
     async function startTracking() {
@@ -377,7 +340,7 @@
       hands.setOptions({
         maxNumHands: 1,
         modelComplexity: 1,
-        minDetectionConfidence: 0.7,
+        minDetectionConfidence: 0.72,
         minTrackingConfidence: 0.72,
       });
 
@@ -394,38 +357,32 @@
       try {
         await cameraFeed.start();
         isTracking = true;
-        setPill(trackPill, true, 'Tracking');
-        startBtn.textContent = 'Tracking Active';
+        setTrackingPill(true);
+        startBtn.textContent = 'Camera Active';
         startBtn.disabled = true;
-        statusEl.textContent = 'Tracking is active. Pinch to sculpt 3D strokes.';
+        statusEl.textContent = 'Tracking started. Hold a sign steady to convert it into text.';
       } catch (error) {
-        statusEl.textContent = 'Camera permission failed. Please allow webcam access.';
+        statusEl.textContent = 'Could not start camera. Please allow webcam access and refresh.';
       }
     }
 
-    function animate() {
-      controls.update();
-      renderer.render(scene, camera3d);
-      requestAnimationFrame(animate);
-    }
-
-    smoothSlider.addEventListener('input', () => {
-      smoothingAlpha = Number(smoothSlider.value);
-      smoothValue.textContent = smoothingAlpha.toFixed(2);
-    });
-
-    radiusSlider.addEventListener('input', () => {
-      tubeRadius = Number(radiusSlider.value);
-      radiusValue.textContent = tubeRadius.toFixed(3);
-    });
-
     startBtn.addEventListener('click', startTracking);
-    clearBtn.addEventListener('click', clearModel);
 
-    window.addEventListener('resize', resize3D);
+    clearBtn.addEventListener('click', () => {
+      outputEl.value = '';
+      statusEl.textContent = 'Transcript cleared.';
+    });
 
-    resize3D();
-    animate();
+    speakBtn.addEventListener('click', () => {
+      if (!outputEl.value.trim()) {
+        statusEl.textContent = 'Nothing to speak yet.';
+        return;
+      }
+      const utterance = new SpeechSynthesisUtterance(outputEl.value);
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utterance);
+      statusEl.textContent = 'Speaking the converted message.';
+    });
   </script>
 </body>
 </html>
