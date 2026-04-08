@@ -3,390 +3,220 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HandTrack 3D Model Studio</title>
+  <title>Hand Motion ➜ Sign Language Text (A-Z)</title>
   <style>
-    :root {
-      color-scheme: dark;
-      --bg: #030712;
-      --panel: #111827cc;
-      --border: #334155;
-      --text: #e5e7eb;
-      --muted: #94a3b8;
-      --accent: #22d3ee;
-      --ok: #34d399;
-      --warn: #f59e0b;
-    }
-
+    :root { color-scheme: dark; --bg:#030712; --panel:#0f172acc; --text:#e2e8f0; --muted:#94a3b8; --accent:#22d3ee; --ok:#34d399; }
     * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      background: radial-gradient(circle at top, #0b1224, var(--bg) 60%);
-      color: var(--text);
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      min-height: 100vh;
-      padding: 16px;
-      display: grid;
-      place-items: center;
-    }
-
-    .layout {
-      width: min(1200px, 100%);
-      display: grid;
-      grid-template-columns: 1fr 1.2fr;
-      gap: 14px;
-    }
-
-    .card {
-      background: var(--panel);
-      border: 1px solid #33415566;
-      border-radius: 14px;
-      backdrop-filter: blur(6px);
-      padding: 14px;
-      box-shadow: 0 16px 40px #02061799;
-    }
-
-    h1 {
-      margin: 0 0 8px;
-      font-size: clamp(1.15rem, 2.4vw, 1.7rem);
-    }
-
-    .muted {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .stage {
-      margin-top: 12px;
-      position: relative;
-      width: 100%;
-      aspect-ratio: 4 / 3;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid #475569;
-      background: #020617;
-    }
-
-    video, #overlay {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scaleX(-1);
-    }
-
-    #overlay { pointer-events: none; }
-
-    .controls {
-      display: grid;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    button {
-      border-radius: 10px;
-      border: 1px solid #475569;
-      background: #1f2937;
-      color: var(--text);
-      font-weight: 600;
-      padding: 9px 13px;
-      cursor: pointer;
-    }
-
-    button.primary {
-      background: #083344;
-      border-color: #0891b2;
-      color: #a5f3fc;
-    }
-
-    .pill {
-      font-size: .9rem;
-      border-radius: 999px;
-      border: 1px solid #475569;
-      padding: 6px 10px;
-      color: var(--muted);
-      background: #0f172a;
-    }
-
-    .pill.on {
-      color: var(--ok);
-      border-color: #34d39999;
-    }
-
-    label {
-      display: grid;
-      gap: 4px;
-      font-size: .9rem;
-      color: var(--muted);
-      min-width: 170px;
-    }
-
-    input[type="range"] { width: 100%; }
-
-    #viewer3d {
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      border-radius: 12px;
-      border: 1px solid #475569;
-      display: block;
-      background: #020617;
-    }
-
-    .help {
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: .9rem;
-    }
-
-    @media (max-width: 980px) {
-      .layout { grid-template-columns: 1fr; }
-    }
+    body { margin:0; min-height:100vh; background:radial-gradient(circle at top,#0b1224,var(--bg) 60%); color:var(--text); font-family:Inter,system-ui,sans-serif; padding:16px; display:grid; place-items:center; }
+    .layout { width:min(1100px,100%); display:grid; grid-template-columns:1.2fr 1fr; gap:14px; }
+    .card { background:var(--panel); border:1px solid #33415588; border-radius:14px; padding:14px; backdrop-filter:blur(8px); box-shadow:0 18px 35px #02061766; }
+    h1 { margin:0 0 8px; font-size:clamp(1.1rem,2.4vw,1.6rem); }
+    .muted,.legend { margin:0; color:var(--muted); line-height:1.45; }
+    .stage { margin-top:12px; position:relative; width:100%; aspect-ratio:4/3; border-radius:12px; overflow:hidden; border:1px solid #475569; background:#020617; }
+    video,canvas { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+    #overlay { pointer-events:none; }
+    .controls { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; align-items:center; }
+    button { border-radius:10px; border:1px solid #475569; background:#1f2937; color:var(--text); padding:9px 13px; font-weight:600; cursor:pointer; }
+    .primary { background:#083344; border-color:#0891b2; color:#a5f3fc; }
+    .pill { border-radius:999px; border:1px solid #475569; padding:6px 10px; color:var(--muted); background:#0f172a; font-size:.9rem; }
+    .pill.on { color:var(--ok); border-color:#34d39999; }
+    .big { margin-top:12px; border:1px solid #1e3a8a; background:#0b1124; border-radius:12px; padding:16px; text-align:center; }
+    .big h2 { margin:0; color:var(--muted); font-size:.95rem; }
+    .sign { margin-top:8px; font-size:clamp(2rem,5vw,3.2rem); font-weight:800; color:var(--accent); min-height:1.3em; }
+    #output { margin-top:12px; width:100%; min-height:140px; border-radius:12px; border:1px solid #334155; background:#020617; color:var(--text); padding:12px; font-size:1rem; line-height:1.45; resize:vertical; }
+    code { background:#111827; border:1px solid #374151; padding:1px 6px; border-radius:7px; }
+    @media (max-width:900px){ .layout { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
   <main class="layout">
     <section class="card">
-      <h1>🖐️ Smooth Hand Tracking</h1>
-      <p class="muted">Pinch <strong>thumb + index</strong> to draw a 3D stroke. Release to stop. We smooth landmarks to reduce jitter and keep tracking accurate.</p>
-
-      <div class="stage">
-        <video id="video" autoplay playsinline muted></video>
-        <canvas id="overlay"></canvas>
-      </div>
-
+      <h1>🤟 Hand Motion to Sign Language Text (A-Z)</h1>
+      <p class="muted">Prototype recognizer for all alphabet letters. Hold a sign steady for ~1 second to append it to the transcript.</p>
+      <div class="stage"><video id="video" autoplay playsinline muted></video><canvas id="overlay"></canvas></div>
       <div class="controls">
-        <div class="row">
-          <button id="startBtn" class="primary">Start Tracking</button>
-          <button id="clearBtn">Clear Model</button>
-          <span id="trackPill" class="pill">Tracking: Off</span>
-          <span id="drawPill" class="pill">Drawing: Off</span>
-        </div>
-
-        <div class="row">
-          <label>
-            Smoothing: <span id="smoothValue">0.62</span>
-            <input id="smoothSlider" type="range" min="0.1" max="0.9" step="0.01" value="0.62" />
-          </label>
-          <label>
-            Tube Radius: <span id="radiusValue">0.020</span>
-            <input id="radiusSlider" type="range" min="0.008" max="0.04" step="0.001" value="0.02" />
-          </label>
-        </div>
+        <button id="startBtn" class="primary">Start Camera</button>
+        <button id="clearBtn">Clear Text</button>
+        <button id="speakBtn">Speak Text</button>
+        <span id="trackPill" class="pill">Tracking: Off</span>
       </div>
+      <p id="status" class="legend" style="margin-top:10px;">Ready. Click <code>Start Camera</code> and allow webcam access.</p>
     </section>
 
     <section class="card">
-      <h1>🧊 Live 3D Model Output</h1>
-      <canvas id="viewer3d"></canvas>
-      <p id="status" class="help">Ready. Click “Start Tracking” and allow camera access.</p>
-      <p class="help">Tip: move slowly for detailed geometry. Orbit camera with drag, zoom with wheel.</p>
+      <h1>📝 Live Conversion</h1>
+      <div class="big"><h2>Current Detected Sign</h2><div id="currentSign" class="sign">—</div></div>
+      <textarea id="output" placeholder="Detected letters appear here..."></textarea>
+      <p class="legend" style="margin-top:10px;"><strong>Alphabet enabled:</strong> A B C D E F G H I J K L M N O P Q R S T U V W X Y Z.</p>
+      <p class="legend" style="margin-top:8px;"><strong>Note:</strong> J and Z use motion tracing; the rest are static-shape heuristics.</p>
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-  <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
-
   <script>
     const video = document.getElementById('video');
     const overlay = document.getElementById('overlay');
-    const overlayCtx = overlay.getContext('2d');
+    const ctx = overlay.getContext('2d');
 
     const startBtn = document.getElementById('startBtn');
     const clearBtn = document.getElementById('clearBtn');
+    const speakBtn = document.getElementById('speakBtn');
     const trackPill = document.getElementById('trackPill');
-    const drawPill = document.getElementById('drawPill');
     const statusEl = document.getElementById('status');
-
-    const smoothSlider = document.getElementById('smoothSlider');
-    const smoothValue = document.getElementById('smoothValue');
-    const radiusSlider = document.getElementById('radiusSlider');
-    const radiusValue = document.getElementById('radiusValue');
-
-    const viewer = document.getElementById('viewer3d');
+    const currentSignEl = document.getElementById('currentSign');
+    const outputEl = document.getElementById('output');
 
     let isTracking = false;
-    let isDrawing = false;
-    let smoothedPoint = null;
-    let currentStroke = [];
-    let smoothingAlpha = Number(smoothSlider.value);
-    let tubeRadius = Number(radiusSlider.value);
+    let signVotes = [];
+    let stableSign = '';
+    let lastCommittedSign = '';
+    let lastCommitAt = 0;
+    const motionTrail = [];
 
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x020617);
+    const HOLD_MS = 1000;
+    const COOLDOWN_MS = 850;
 
-    const camera3d = new THREE.PerspectiveCamera(45, 1, 0.01, 100);
-    camera3d.position.set(0.9, 0.7, 1.2);
-
-    const renderer = new THREE.WebGLRenderer({ canvas: viewer, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    const controls = new THREE.OrbitControls(camera3d, viewer);
-    controls.enableDamping = true;
-
-    const hemi = new THREE.HemisphereLight(0x67e8f9, 0x020617, 1.3);
-    scene.add(hemi);
-
-    const dir = new THREE.DirectionalLight(0xffffff, 1.2);
-    dir.position.set(1.5, 2, 1.2);
-    scene.add(dir);
-
-    const grid = new THREE.GridHelper(2, 16, 0x334155, 0x1e293b);
-    grid.position.y = -0.45;
-    scene.add(grid);
-
-    const strokesGroup = new THREE.Group();
-    scene.add(strokesGroup);
-
-    function resize3D() {
-      const rect = viewer.getBoundingClientRect();
-      renderer.setSize(rect.width, rect.height, false);
-      camera3d.aspect = rect.width / rect.height;
-      camera3d.updateProjectionMatrix();
+    function setTrackingPill(isOn) {
+      trackPill.textContent = `Tracking: ${isOn ? 'On' : 'Off'}`;
+      trackPill.classList.toggle('on', isOn);
     }
 
-    function setPill(element, isOn, label) {
-      element.textContent = `${label}: ${isOn ? 'On' : 'Off'}`;
-      element.classList.toggle('on', isOn);
+    function appendText(text) {
+      if (text.length !== 1) return;
+      outputEl.value += text;
     }
 
-    function smoothPoint(raw) {
-      if (!smoothedPoint) {
-        smoothedPoint = { ...raw };
-        return smoothedPoint;
+    function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z); }
+    function fingerUp(lm, tip, pip) { return lm[tip].y < lm[pip].y - 0.01; }
+    function fingerBent(lm, tip, pip) { return lm[tip].y > lm[pip].y - 0.005; }
+
+    function features(lm) {
+      const indexUp = fingerUp(lm, 8, 6);
+      const middleUp = fingerUp(lm, 12, 10);
+      const ringUp = fingerUp(lm, 16, 14);
+      const pinkyUp = fingerUp(lm, 20, 18);
+      const thumbFar = Math.abs(lm[4].x - lm[2].x) > 0.085;
+      const thumbPinchIndex = dist(lm[4], lm[8]) < 0.055;
+      const thumbPinchMiddle = dist(lm[4], lm[12]) < 0.06;
+      const thumbAcrossPalm = dist(lm[4], lm[9]) < 0.09;
+      const allCurled = fingerBent(lm, 8, 6) && fingerBent(lm, 12, 10) && fingerBent(lm, 16, 14) && fingerBent(lm, 20, 18);
+      const upCount = [indexUp, middleUp, ringUp, pinkyUp].filter(Boolean).length;
+      const gapIM = Math.abs(lm[8].x - lm[12].x);
+      const indexHorizontal = Math.abs(lm[8].x - lm[5].x) > Math.abs(lm[8].y - lm[5].y);
+      const downPointing = lm[8].y > lm[6].y && lm[12].y > lm[10].y;
+      return { indexUp, middleUp, ringUp, pinkyUp, thumbFar, thumbPinchIndex, thumbPinchMiddle, thumbAcrossPalm, allCurled, upCount, gapIM, indexHorizontal, downPointing };
+    }
+
+    function detectJorZ(lm, pose) {
+      const now = performance.now();
+      motionTrail.push({ t: now, x: lm[8].x, y: lm[8].y, px: lm[20].x, py: lm[20].y });
+      while (motionTrail.length && now - motionTrail[0].t > 900) motionTrail.shift();
+      if (motionTrail.length < 5) return '';
+
+      const dx = motionTrail[motionTrail.length - 1].x - motionTrail[0].x;
+      const dy = motionTrail[motionTrail.length - 1].y - motionTrail[0].y;
+      const zig = motionTrail.some((p, i) => i > 0 && Math.sign(p.x - motionTrail[i - 1].x) !== Math.sign(dx));
+
+      if (pose.indexUp && !pose.middleUp && !pose.ringUp && !pose.pinkyUp && Math.abs(dx) > 0.06 && Math.abs(dy) > 0.03 && zig) return 'Z';
+
+      const pdx = motionTrail[motionTrail.length - 1].px - motionTrail[0].px;
+      const pdy = motionTrail[motionTrail.length - 1].py - motionTrail[0].py;
+      if (!pose.indexUp && !pose.middleUp && !pose.ringUp && pose.pinkyUp && Math.abs(pdx) > 0.03 && pdy > 0.03) return 'J';
+
+      return '';
+    }
+
+    function classifySign(lm) {
+      const p = features(lm);
+      const dynamic = detectJorZ(lm, p);
+      if (dynamic) return dynamic;
+
+      if (p.allCurled && p.thumbFar && !p.thumbAcrossPalm) return 'A';
+      if (p.indexUp && p.middleUp && p.ringUp && p.pinkyUp && p.thumbAcrossPalm) return 'B';
+      if (!p.indexUp && !p.middleUp && !p.ringUp && !p.pinkyUp && p.thumbPinchIndex && p.thumbPinchMiddle) return 'C';
+      if (p.indexUp && !p.middleUp && !p.ringUp && !p.pinkyUp && p.thumbPinchMiddle) return 'D';
+      if (p.allCurled && p.thumbAcrossPalm) return 'E';
+      if (p.thumbPinchIndex && p.middleUp && p.ringUp && p.pinkyUp) return 'F';
+      if (p.indexUp && !p.middleUp && !p.ringUp && !p.pinkyUp && p.thumbFar && p.indexHorizontal) return 'G';
+      if (p.indexUp && p.middleUp && !p.ringUp && !p.pinkyUp && p.gapIM < 0.05) return 'H';
+      if (!p.indexUp && !p.middleUp && !p.ringUp && p.pinkyUp && !p.thumbFar) return 'I';
+      if (p.indexUp && p.middleUp && !p.ringUp && !p.pinkyUp && p.thumbFar && p.gapIM > 0.06) return 'K';
+      if (p.indexUp && !p.middleUp && !p.ringUp && !p.pinkyUp && p.thumbFar) return 'L';
+      if (p.allCurled && dist(lm[4], lm[17]) < 0.08) return 'M';
+      if (p.allCurled && dist(lm[4], lm[13]) < 0.08) return 'N';
+      if (p.thumbPinchIndex && p.thumbPinchMiddle && !p.indexUp && !p.middleUp && !p.ringUp && !p.pinkyUp) return 'O';
+      if (p.indexUp && p.middleUp && !p.ringUp && !p.pinkyUp && p.thumbFar && p.downPointing) return 'P';
+      if (p.indexUp && !p.middleUp && !p.ringUp && !p.pinkyUp && p.thumbFar && p.downPointing) return 'Q';
+      if (p.indexUp && p.middleUp && !p.ringUp && !p.pinkyUp && p.gapIM < 0.025) return 'R';
+      if (p.allCurled && !p.thumbFar) return 'S';
+      if (p.allCurled && dist(lm[4], lm[6]) < 0.05) return 'T';
+      if (p.indexUp && p.middleUp && !p.ringUp && !p.pinkyUp && p.gapIM < 0.04) return 'U';
+      if (p.indexUp && p.middleUp && !p.ringUp && !p.pinkyUp && p.gapIM >= 0.04) return 'V';
+      if (p.indexUp && p.middleUp && p.ringUp && !p.pinkyUp) return 'W';
+      if (!p.indexUp && !p.middleUp && !p.ringUp && !p.pinkyUp && dist(lm[8], lm[6]) > 0.03) return 'X';
+      if (!p.indexUp && !p.middleUp && !p.ringUp && p.pinkyUp && p.thumbFar) return 'Y';
+
+      return '';
+    }
+
+    function majorityVote(votes) {
+      const counts = new Map();
+      for (const v of votes) counts.set(v, (counts.get(v) || 0) + 1);
+      let best = '';
+      let max = 0;
+      for (const [k, c] of counts.entries()) if (c > max) { best = k; max = c; }
+      return best;
+    }
+
+    function maybeCommit(sign) {
+      const now = performance.now();
+      if (!sign) return;
+      if (stableSign !== sign) { stableSign = sign; lastCommitAt = now; return; }
+      const held = now - lastCommitAt >= HOLD_MS;
+      const cooldown = now - lastCommitAt < HOLD_MS + COOLDOWN_MS;
+      if (held && (!cooldown || lastCommittedSign !== sign)) {
+        appendText(sign);
+        lastCommittedSign = sign;
+        lastCommitAt = now;
       }
-
-      smoothedPoint = {
-        x: smoothedPoint.x * smoothingAlpha + raw.x * (1 - smoothingAlpha),
-        y: smoothedPoint.y * smoothingAlpha + raw.y * (1 - smoothingAlpha),
-        z: smoothedPoint.z * smoothingAlpha + raw.z * (1 - smoothingAlpha),
-      };
-
-      return smoothedPoint;
-    }
-
-    function toWorldPoint(landmark) {
-      const x = (0.5 - landmark.x) * 1.2;
-      const y = (0.5 - landmark.y) * 1.2;
-      const z = -landmark.z * 0.75;
-      return new THREE.Vector3(x, y, z);
-    }
-
-    function appendStrokePoint(point) {
-      if (currentStroke.length > 0) {
-        const prev = currentStroke[currentStroke.length - 1];
-        if (prev.distanceTo(point) < 0.004) {
-          return;
-        }
-      }
-
-      currentStroke.push(point);
-
-      if (currentStroke.length < 8) return;
-
-      const preview = strokesGroup.getObjectByName('preview');
-      if (preview) {
-        preview.geometry.dispose();
-        preview.material.dispose();
-        strokesGroup.remove(preview);
-      }
-
-      const curve = new THREE.CatmullRomCurve3(currentStroke, false, 'centripetal');
-      const geometry = new THREE.TubeGeometry(curve, Math.min(220, currentStroke.length * 3), tubeRadius, 14, false);
-      const material = new THREE.MeshStandardMaterial({ color: 0x22d3ee, roughness: 0.25, metalness: 0.08 });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.name = 'preview';
-      strokesGroup.add(mesh);
-    }
-
-    function finalizeStroke() {
-      const preview = strokesGroup.getObjectByName('preview');
-      if (!preview) {
-        currentStroke = [];
-        return;
-      }
-
-      preview.name = `stroke-${Date.now()}`;
-      currentStroke = [];
-    }
-
-    function clearModel() {
-      while (strokesGroup.children.length) {
-        const child = strokesGroup.children.pop();
-        child.geometry.dispose();
-        child.material.dispose();
-      }
-      currentStroke = [];
-      statusEl.textContent = '3D model cleared.';
     }
 
     function handleResults(results) {
       overlay.width = video.videoWidth || 640;
       overlay.height = video.videoHeight || 480;
+      ctx.clearRect(0, 0, overlay.width, overlay.height);
 
-      overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
-
-      if (results.multiHandLandmarks?.length) {
-        const landmarks = results.multiHandLandmarks[0];
-
-        drawConnectors(overlayCtx, landmarks, HAND_CONNECTIONS, { color: '#22d3ee', lineWidth: 3 });
-        drawLandmarks(overlayCtx, landmarks, { color: '#e2e8f0', lineWidth: 1, radius: 2.4 });
-
-        const indexTip = landmarks[8];
-        const thumbTip = landmarks[4];
-        const pinchDistance = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y, indexTip.z - thumbTip.z);
-        const pinch = pinchDistance < 0.055;
-
-        const stable = smoothPoint(indexTip);
-
-        if (pinch) {
-          isDrawing = true;
-          appendStrokePoint(toWorldPoint(stable));
-          statusEl.textContent = 'Drawing 3D tube...';
-        } else if (isDrawing) {
-          isDrawing = false;
-          finalizeStroke();
-          statusEl.textContent = 'Stroke finalized. Pinch again to add another piece.';
-        }
-      } else if (isDrawing) {
-        isDrawing = false;
-        finalizeStroke();
+      if (!results.multiHandLandmarks?.length) {
+        signVotes = [];
+        currentSignEl.textContent = '—';
+        return;
       }
 
-      setPill(drawPill, isDrawing, 'Drawing');
+      const lm = results.multiHandLandmarks[0];
+      drawConnectors(ctx, lm, HAND_CONNECTIONS, { color: '#22d3ee', lineWidth: 3 });
+      drawLandmarks(ctx, lm, { color: '#e2e8f0', lineWidth: 1, radius: 2.2 });
+
+      const sign = classifySign(lm);
+      if (sign) {
+        signVotes.push(sign);
+        if (signVotes.length > 10) signVotes.shift();
+      }
+
+      const voted = majorityVote(signVotes);
+      currentSignEl.textContent = voted || '…';
+      maybeCommit(voted);
     }
 
     async function startTracking() {
       if (isTracking) return;
-
-      const hands = new Hands({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
-      });
-
-      hands.setOptions({
-        maxNumHands: 1,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.7,
-        minTrackingConfidence: 0.72,
-      });
-
+      const hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+      hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.72, minTrackingConfidence: 0.72 });
       hands.onResults(handleResults);
 
       const cameraFeed = new Camera(video, {
-        onFrame: async () => {
-          await hands.send({ image: video });
-        },
+        onFrame: async () => { await hands.send({ image: video }); },
         width: 960,
         height: 720,
       });
@@ -394,38 +224,24 @@
       try {
         await cameraFeed.start();
         isTracking = true;
-        setPill(trackPill, true, 'Tracking');
-        startBtn.textContent = 'Tracking Active';
+        setTrackingPill(true);
+        startBtn.textContent = 'Camera Active';
         startBtn.disabled = true;
-        statusEl.textContent = 'Tracking is active. Pinch to sculpt 3D strokes.';
+        statusEl.textContent = 'Tracking started. Hold each letter steadily to append it.';
       } catch (error) {
-        statusEl.textContent = 'Camera permission failed. Please allow webcam access.';
+        statusEl.textContent = 'Could not start camera. Please allow webcam access and refresh.';
       }
     }
 
-    function animate() {
-      controls.update();
-      renderer.render(scene, camera3d);
-      requestAnimationFrame(animate);
-    }
-
-    smoothSlider.addEventListener('input', () => {
-      smoothingAlpha = Number(smoothSlider.value);
-      smoothValue.textContent = smoothingAlpha.toFixed(2);
-    });
-
-    radiusSlider.addEventListener('input', () => {
-      tubeRadius = Number(radiusSlider.value);
-      radiusValue.textContent = tubeRadius.toFixed(3);
-    });
-
     startBtn.addEventListener('click', startTracking);
-    clearBtn.addEventListener('click', clearModel);
-
-    window.addEventListener('resize', resize3D);
-
-    resize3D();
-    animate();
+    clearBtn.addEventListener('click', () => { outputEl.value = ''; statusEl.textContent = 'Transcript cleared.'; });
+    speakBtn.addEventListener('click', () => {
+      if (!outputEl.value.trim()) { statusEl.textContent = 'Nothing to speak yet.'; return; }
+      const u = new SpeechSynthesisUtterance(outputEl.value.split('').join(' '));
+      speechSynthesis.cancel();
+      speechSynthesis.speak(u);
+      statusEl.textContent = 'Speaking the converted letters.';
+    });
   </script>
 </body>
 </html>
